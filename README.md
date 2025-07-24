@@ -1,2 +1,2 @@
 # underactuated
-Underactuated robotics projects :)
+underactuated robotic arm 
