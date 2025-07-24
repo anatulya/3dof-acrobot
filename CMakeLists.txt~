@@ -1,0 +1,13 @@
+cmake_minimum_required(VERSION 3.10)
+project(underactuated-arm)
+
+# Include C++ standard
+set(CMAKE_CXX_STANDARD 17)
+
+# Set MuJoCo root
+set(MUJOCO_ROOT /opt/mujoco)
+include_directories(${MUJOCO_ROOT}/include)
+link_directories(${MUJOCO_ROOT}/build)
+
+# Add the subdirectory
+add_subdirectory(core)
