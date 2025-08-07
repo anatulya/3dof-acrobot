@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/underactuated-arm.dir/core/main.cpp.o -o underactuated-arm   -L/opt/mujoco/build/lib  -Wl,-rpath,/opt/mujoco/build/lib -lmujoco -lglfw -lpthread -ldl -lm -lX11 

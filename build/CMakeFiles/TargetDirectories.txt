@@ -1,3 +1,0 @@
-/home/underactuated-arm/build/CMakeFiles/underactuated-arm.dir
-/home/underactuated-arm/build/CMakeFiles/edit_cache.dir
-/home/underactuated-arm/build/CMakeFiles/rebuild_cache.dir
