@@ -1,10 +1,6 @@
 # underactuated
 underactuated robotic arm
 
-Run docker
-cd ./underactuated-arm
-docker run -it \
-  -v $(pwd):/home/underactuated-arm \
-  -v $SSH_AUTH_SOCK:/ssh-agent \
-  -e SSH_AUTH_SOCK=/ssh-agent \
-  mujoco-cpp /bin/bash
+mamba create -n underactuated-arm python=3.10
+pip install mujoco glfw numpy matplotlib
+

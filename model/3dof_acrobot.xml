@@ -1,0 +1,42 @@
+<mujoco model="acrobot3">
+  <compiler angle="radian"/>
+  <option gravity="0 0 -9.81" timestep="0.002"/>
+
+  <default>
+    <joint limited="true" range="-3.2 3.2" damping="0.02" armature="0.01"/>
+    <motor ctrllimited="true" ctrlrange="-0.5 0.5" gear="4" forcelimited="true" forcerange="-20 20"/>
+    <geom rgba="0.7 0.7 0.75 1"/>
+  </default>
+
+  <worldbody>
+    <body name="base" pos="0 0 0.05">
+      <body name="link0" pos="0 0 0">
+        <joint name="j0" type="hinge" axis="0 1 0"/>
+        <geom type="capsule" fromto="0 0 0  0 0 0.4" size="0.03"/>
+        <inertial pos="0 0 0.20" mass="0.8" diaginertia="0.004 0.004 0.0015"/>
+
+        <body name="link1" pos="0 0 0.4">
+          <joint name="j1" type="hinge" axis="0 1 0"/>
+          <geom type="capsule" fromto="0 0 0  0 0 0.35" size="0.028"/>
+          <inertial pos="0 0 0.175" mass="0.6" diaginertia="0.003 0.003 0.0012"/>
+
+          <body name="link2" pos="0 0 0.35">
+            <joint name="j2" type="hinge" axis="0 1 0"/>
+            <geom type="capsule" fromto="0 0 0  0 0 0.3" size="0.026"/>
+            <inertial pos="0 0 0.15" mass="0.5" diaginertia="0.002 0.002 0.0009"/>
+            <site name="ee" pos="0 0 0.30" size="0.01" rgba="1 0.8 0 1"/>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <motor name="m1" joint="j1"/>
+    <motor name="m2" joint="j2"/>
+  </actuator>
+
+  <keyframe>
+    <key name="start" qpos="0.2 0.85 -0.55"/>
+  </keyframe>
+</mujoco>
