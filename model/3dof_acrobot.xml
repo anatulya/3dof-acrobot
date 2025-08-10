@@ -1,42 +1,62 @@
 <mujoco model="acrobot3">
+  <!-- angles in radians; gravity along -z so motion is in the x–z plane -->
   <compiler angle="radian"/>
-  <option gravity="0 0 -9.81" timestep="0.002"/>
+  <option gravity="0 0 -9.81" timestep="0.002" integrator="RK4"/>
 
   <default>
-    <joint limited="true" range="-3.2 3.2" damping="0.02" armature="0.01"/>
-    <motor ctrllimited="true" ctrlrange="-0.5 0.5" gear="4" forcelimited="true" forcerange="-20 20"/>
-    <geom rgba="0.7 0.7 0.75 1"/>
+    <!-- Don't limit revolute joints unless you really need to -->
+    <joint type="hinge" limited="false" damping="0.05" armature="0.002"/>
+    <geom type="capsule" size="0.03" rgba="0.7 0.7 0.75 1" density="800" />
+    <motor ctrllimited="true" ctrlrange="-3 3" gear="1"/>
   </default>
 
   <worldbody>
+    <!-- Fixed base -->
     <body name="base" pos="0 0 0.05">
-      <body name="link0" pos="0 0 0">
-        <joint name="j0" type="hinge" axis="0 1 0"/>
-        <geom type="capsule" fromto="0 0 0  0 0 0.4" size="0.03"/>
-        <inertial pos="0 0 0.20" mass="0.8" diaginertia="0.004 0.004 0.0015"/>
+      <!-- Link 1 (length 0.4 along +z) -->
+      <body name="link1" pos="0 0 0">
+        <joint name="j1" axis="0 1 0"/>  <!-- rotate about +y -->
+        <!-- Inertial at center of the rod (approx for a solid cylinder) -->
+        <inertial pos="0 0 0.2" mass="1.0" diaginertia="0.01356 0.01356 0.00045"/>
+        <geom fromto="0 0 0  0 0 0.4"/>
 
-        <body name="link1" pos="0 0 0.4">
-          <joint name="j1" type="hinge" axis="0 1 0"/>
-          <geom type="capsule" fromto="0 0 0  0 0 0.35" size="0.028"/>
-          <inertial pos="0 0 0.175" mass="0.6" diaginertia="0.003 0.003 0.0012"/>
+        <!-- Link 2 attaches at end of Link 1 -->
+        <body name="link2" pos="0 0 0.4">
+          <joint name="j2" axis="0 1 0"/>
+          <inertial pos="0 0 0.2" mass="1.0" diaginertia="0.01356 0.01356 0.00045"/>
+          <geom fromto="0 0 0  0 0 0.4"/>
 
-          <body name="link2" pos="0 0 0.35">
-            <joint name="j2" type="hinge" axis="0 1 0"/>
-            <geom type="capsule" fromto="0 0 0  0 0 0.3" size="0.026"/>
-            <inertial pos="0 0 0.15" mass="0.5" diaginertia="0.002 0.002 0.0009"/>
-            <site name="ee" pos="0 0 0.30" size="0.01" rgba="1 0.8 0 1"/>
+          <!-- Link 3 attaches at end of Link 2 -->
+          <body name="link3" pos="0 0 0.4">
+            <joint name="j3" axis="0 1 0"/>
+            <inertial pos="0 0 0.2" mass="1.0" diaginertia="0.01356 0.01356 0.00045"/>
+            <geom fromto="0 0 0  0 0 0.4"/>
+            <!-- a site at the tip just for visualization/debugging -->
+            <site name="tip" pos="0 0 0.4" size="0.01" rgba="0.9 0.3 0.3 1"/>
           </body>
         </body>
       </body>
     </body>
   </worldbody>
 
+  <!-- Only the last joint is actuated: underactuated 3-link acrobot -->
   <actuator>
-    <motor name="m1" joint="j1"/>
-    <motor name="m2" joint="j2"/>
+    <motor name="u3" joint="j3"/>
+    <!-- If you want to actuate j2 as well, add: <motor name="u2" joint="j2"/> -->
   </actuator>
 
+  <!-- Sensors are handy while debugging -->
+  <sensor>
+    <jointpos joint="j1"/>
+    <jointvel joint="j1"/>
+    <jointpos joint="j2"/>
+    <jointvel joint="j2"/>
+    <jointpos joint="j3"/>
+    <jointvel joint="j3"/>
+  </sensor>
+
+  <!-- Start slightly perturbed so it doesn't sit perfectly vertical -->
   <keyframe>
-    <key name="start" qpos="0.2 0.85 -0.55"/>
+    <key name="init" qpos="3.00 0.10 -0.10" qvel="0 0 0"/>
   </keyframe>
 </mujoco>

@@ -1,0 +1,43 @@
+<mujoco model="acrobot3_match_ode">
+  <!-- We will set inertials explicitly; geoms are massless visuals -->
+  <compiler angle="radian" />
+  <option gravity="0 0 -9.81" timestep="0.001" integrator="RK4"/>
+
+  <default>
+    <joint type="hinge" axis="0 1 0" limited="false" />
+    <!-- Visual-only rods; no mass, no contact/friction -->
+    <geom type="capsule" />
+  </default>
+
+  <!-- Choose the exact masses/lengths you used in your 2D model -->
+  <!-- Example: m0=m1=m2=1.0 kg; L0=0.40, L1=0.35, L2=0.30 m; tiny radius r=0.005 m -->
+
+  <worldbody>
+    <body name="base" pos="0 0 1.0">
+      <!-- Link 0 -->
+      <body name="link0" pos="0 0 0">
+        <joint name="j0"/>
+        <!-- inertial at COM: (0,0,-L0/2); Ixx=Iyy=(1/12)mL^2, Izz≈(1/2)mr^2 -->
+        <inertial pos="0 0 -0.20" mass="1.0" diaginertia="0.013333 0.013333 0.0000125"/>
+        <geom fromto="0 0 0   0 0 -0.40" size="0.005"/>
+
+        <!-- Link 1 attaches at tip of link0 -->
+        <body name="link1" pos="0 0 -0.40">
+          <joint name="j1"/>
+          <inertial pos="0 0 -0.175" mass="1.0" diaginertia="0.0102083 0.0102083 0.0000125"/>
+          <geom fromto="0 0 0   0 0 -0.35" size="0.005"/>
+
+          <!-- Link 2 attaches at tip of link1 -->
+          <body name="link2" pos="0 0 -0.35">
+            <joint name="j2"/>
+            <inertial pos="0 0 -0.15" mass="1.0" diaginertia="0.0075 0.0075 0.0000125"/>
+            <geom fromto="0 0 0   0 0 -0.30" size="0.005"/>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <!-- No actuators: pure passive swing (like your ODE unless you had inputs) -->
+  <actuator/>
+</mujoco>

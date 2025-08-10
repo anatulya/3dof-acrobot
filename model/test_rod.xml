@@ -1,0 +1,57 @@
+<mujoco model="acrobot3">
+  <compiler angle="radian"/>
+  <option timestep="0.002" integrator="RK4" gravity="0 0 -9.81"/>
+
+  <default>
+    <!-- All hinges rotate about +Y so motion is in the X–Z plane -->
+    <joint type="hinge" axis="0 1 0" limited="true" range="-2.6 2.6"
+           damping="0.25" armature="0.002"/>
+    <!-- Rods: capsules with density-based mass/inertia (units kg/m^3) -->
+    <geom type="capsule" density="700" friction="0.4 0.01 0.01" rgba="0.70 0.72 0.78 1"/>
+    <motor ctrllimited="true" ctrlrange="-6 6" gear="1"/>
+  </default>
+
+  <asset>
+    <!-- Optional floor material/look -->
+  </asset>
+
+  <worldbody>
+    <!-- Floor (optional, infinite plane) -->
+    <geom name="floor" type="plane" pos="0 0 0" size="5 5 0.1" rgba="0.9 0.9 0.9 1"/>
+
+    <!-- Put the base high enough so rods hang without hitting the floor -->
+    <body name="base" pos="0 0 1.2">
+      <!-- Link 0 -->
+      <body name="link0" pos="0 0 0">
+        <joint name="j0"/>
+        <!-- Rod pointing DOWN along -Z (length L0 = 0.40, radius r0 = 0.03) -->
+        <geom name="g0" fromto="0 0 0   0 0 -0.40" size="0.03"/>
+        <!-- COM marker (optional) -->
+        <site name="com0" pos="0 0 -0.20" size="0.01" rgba="1 0 0 1"/>
+
+        <!-- Link 1 attaches at the tip of link0 -->
+        <body name="link1" pos="0 0 -0.40">
+          <joint name="j1"/>
+          <!-- L1 = 0.35, r1 = 0.028 -->
+          <geom name="g1" fromto="0 0 0   0 0 -0.35" size="0.028"/>
+          <site name="com1" pos="0 0 -0.175" size="0.01" rgba="0 1 0 1"/>
+
+          <!-- Link 2 attaches at the tip of link1 -->
+          <body name="link2" pos="0 0 -0.35">
+            <joint name="j2"/>
+            <!-- L2 = 0.30, r2 = 0.025 -->
+            <geom name="g2" fromto="0 0 0   0 0 -0.30" size="0.025"/>
+            <site name="com2" pos="0 0 -0.15" size="0.01" rgba="0 0 1 1"/>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <!-- Underactuated: motorize only the distal joints (j1, j2).
+       Leave j0 passive (classic acrobot style). -->
+  <actuator>
+    <motor name="m1" joint="j1"/>
+    <motor name="m2" joint="j2"/>
+  </actuator>
+</mujoco>

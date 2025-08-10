@@ -28,7 +28,7 @@ dt = 0.005
 t_eval = np.arange(0.0, t_end, dt)
 
 # initial configuration (state space)
-x0 = np.array([-0.2, 0.1, 0.0, 0.0])
+x0 = np.array([np.pi/4, 0.0, 0.0, 0.0])
 
 def mat_inertial(q):
     """
@@ -73,7 +73,7 @@ def vec_torque(q):
     """
 
     th1, th2 = q
-    v1 = (1/2)*m1*g*l1*sin(th1) + m2*g*l1*sin(th1) + (1/2)*m2*g*l2*sin(th1+th2)
+    v1 = (1/2)*m1*g*l1*sin(th1) + m2*g*l1*sin(th1) + (1/2)*m2*g*l2*sin(th1+th2) 
     v2 = (1/2)*m2*g*l2*sin(th1+th2)
 
     return np.array([ v1, v2 ])
@@ -90,8 +90,12 @@ def f(t, x):
     # exert 0 torque on both actuators
     u = np.array([0.0, 0.0])
 
+    # damping
+    damping_coeff = 0.5
+    tau_damping = damping_coeff * qd
+
     # M*qdd + C*qdot = Bu - tau
-    qdd = np.linalg.solve(M,  B@u - tau - C@qd).flatten()
+    qdd = np.linalg.solve(M,  B@u - tau - C@qd - tau_damping).flatten()
 
     return np.array([d1,d2,qdd[0],qdd[1]])
 
