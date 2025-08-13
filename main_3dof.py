@@ -1,4 +1,3 @@
-
 import mujoco
 from mujoco import viewer
 import math
@@ -16,7 +15,7 @@ Process of performing LQR:
 """
 
 # mujoco
-model = mujoco.MjModel.from_xml_path("model/test_rod_2dof.xml")
+model = mujoco.MjModel.from_xml_path("model/test_roddy.xml")
 data  = mujoco.MjData(model)
 nq, nv, nu = model.nq, model.nv, model.nu
 ctrl_limit = ( model.actuator_ctrlrange[:, 0], model.actuator_ctrlrange[:, 1] )
@@ -27,7 +26,7 @@ def wrap_pi(a):
     return (a + np.pi) % (2*np.pi) - np.pi
 
 def saturate(u):
-    return np.clip(u, ctrl_limit[0], ctrl_limit[1])
+    return np.clip(u, -10, 10)
 
 def f_xu(x, u):
     """
@@ -67,7 +66,7 @@ def linearize(x_star, u_star, eps_x=1e-6, eps_u=1e-6):
 
         f_plus = f_xu(x_star, u_star + du)
         f_minus = f_xu(x_star, u_star - du)
-        B[:, i] = (f_plus - f_minus) / (2*eps_x)
+        B[:, i] = (f_plus - f_minus) / (2*eps_u)
 
     return A, B
 
@@ -79,6 +78,8 @@ def is_controllable(A, B):
     rank = np.linalg.matrix_rank(ctrb)
     return rank == n
 
+
+
 def lqr(A, B, Q, R):
     print(f"[log] A shape: {A.shape}, B shape: {B.shape}, Q shape: {Q.shape}, R shape: {R.shape}")
 
@@ -87,48 +88,60 @@ def lqr(A, B, Q, R):
 
     return K
 
-def retune_R_for_torque(A, B, R_init, deg_test=1.0, u_target_per_deg=1.7,
-                        Q_diag=(300,120,30,20), iters=5):
-    """Scale R so 1° shoulder error produces ~u_target_per_deg torque."""
-    Q = np.diag(Q_diag)
-    R = R_init.copy()
-    e1deg = np.array([np.deg2rad(deg_test), 0, 0, 0])
-    for _ in range(iters):
-        P = linalg.solve_continuous_are(A, B, Q, R)
-        K = np.linalg.inv(R) @ B.T @ P
-        u_per_deg = float(abs((-K @ e1deg)[0]))
-        if u_per_deg <= u_target_per_deg: 
-            return K, R
-        scale = (u_per_deg / u_target_per_deg)**2
-        R *= scale
-    # final solve with the last R
-    P = linalg.solve_continuous_are(A, B, Q, R)
-    K = np.linalg.inv(R) @ B.T @ P
-    return K, R
-
 # lqr 
-x_star = np.array([0.0, 0.0, 0.0, 0.0])
+x_star = np.array([math.pi, 0.0, 0.0, 0.0])
 u_star = np.zeros(nu)
 A, B = linearize(x_star, u_star)
 print(f"[log] x: {x_star}, u: {u_star} controllable?: {is_controllable(A, B)}")
-Q = np.diag([100.0]*nq + [1.0]*nv)
-R = np.eye(nu)
-K = lqr(A, B, Q, R)
+print(f"[log] eigen values of A: {np.linalg.eigvals(A)}")
 
+Q = np.diag([10.0, 100.0, 1.0, 1.0])  # more position than velocity weight
+R = 0.5*np.eye(nu)                      # was 0.05 → too “cheap” to use torque
+K = lqr(A, B, Q, R)
+print(f"[log] K shape: {K.shape}")
+
+
+A_cl = A - B @ K
+eig_cl = np.linalg.eigvals(A_cl)
+print(f"[log] closed-loop eigvals: {eig_cl}")
 
 def controller(x):
-    q  = x[:nq]
-    qd = x[nq:]
-    e_q  = wrap_pi(q  - x_star[:nq])   # wrap angles
-    e_qd =        (qd - x_star[nq:])   # do NOT wrap velocities
-    err = np.hstack([e_q, e_qd])
-    u = u_star - K @ err
-    u /= 2
-    return saturate(u)
+    q, qd = x[:nq], x[nv:]
+    err_q = wrap_pi(q - x_star[:nq])
+    err_qd = (qd - x_star[nv:])
+    err = np.hstack([err_q, err_qd])
+
+    # ---- static gravity feed-forward (qd = 0 to avoid Coriolis/damping) ----
+    data.qpos[:] = q
+    data.qvel[:] = 0.0               # gravity only; set =qd to cancel full bias if you prefer
+    data.ctrl[:] = 0.0
+    mujoco.mj_forward(model, data)
+
+    # elbow DOF index (second hinge)
+    elbow_dof = model.jnt_dofadr[1]  # qfrc_bias is in DOF space
+    tau_g_elbow = data.qfrc_bias[elbow_dof]     # N·m at elbow
+    u_ff = -tau_g_elbow                            # gear=1 → ctrl units
+
+    # ---- LQR feedback ----
+    u_fb = (u_star - K @ err).reshape(-1)         # (nu,)
+
+    # combine FF + FB; if nu==1 we're elbow-only
+    if nu == 1:
+        u_cmd = np.array([u_ff]) + u_fb
+    else:
+        # generic: subtract gravity on each actuated DOF (approx)
+        # NOTE: for multiple actuators you’d map joint torques → actuator space
+        u_cmd = (-data.qfrc_bias[:nu]) + u_fb
+
+    # debug
+    # print("err_q:", err_q, "err_qd:", err_qd)
+    # print("u_ff (grav):", u_ff, "u_fb:", u_fb, "u_cmd before sat:", u_cmd)
+
+    return u_cmd
 
 if __name__ == "__main__":
     # Bent start (radians) in the order your hinge joints are declared: [j0, j1, j2]
-    data.qpos[:] = [np.pi+0.0175, 0.0]
+    data.qpos[:] = [math.pi, 0.2]
     data.qvel[:] = 0.0
     mujoco.mj_forward(model, data)  # recompute derived quantities
 
@@ -136,11 +149,10 @@ if __name__ == "__main__":
         while v.is_running():
             x = np.concatenate(( data.qpos, data.qvel ))
             u = controller(x)
-            print(data.time)
-            # print(u)
+            print(f"[log] torque: {u}")
             data.ctrl[:] = u
 
             mujoco.mj_step(model, data)
 
             v.sync()
-            time.sleep(0.0001)
+            time.sleep(0.002)

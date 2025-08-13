@@ -1,0 +1,42 @@
+<mujoco model="acrobot2">
+  <compiler angle="radian"/>
+  <option timestep="0.002" integrator="RK4" gravity="0 0 -9.81"/>
+
+  <default>
+    <!-- Hinges rotate about +Y so motion is in the X–Z plane -->
+    <joint type="hinge" axis="0 1 0" limited="false" damping="0.02" armature="0.01"/>
+    <!-- Rods: density-based mass/inertia -->
+    <geom type="capsule" density="700" friction="0.4 0.01 0.01" rgba="0.70 0.72 0.78 1"/>
+    <!-- Actuators: 1 ctrl unit = 1 N·m, torque limited -->
+    <motor ctrllimited="true" ctrlrange="-25 25" gear="1"/>
+  </default>
+
+  <worldbody>
+    <!-- Floor (optional) -->
+    <geom name="floor" type="plane" pos="0 0 0" size="5 5 0.1" rgba="0.9 0.9 0.9 1"/>
+
+    <!-- Raise base so links don’t hit the floor when hanging -->
+    <body name="base" pos="0 0 1.2">
+      <!-- Link 0 (shoulder) -->
+      <body name="link0" pos="0 0 0">
+        <joint name="j0"/>
+        <!-- L0 = 0.40 m, r0 = 0.03 m; pointing DOWN along -Z -->
+        <geom name="g0" fromto="0 0 0   0 0 -0.40" size="0.03"/>
+        <site name="com0" pos="0 0 -0.20" size="0.01" rgba="1 0 0 1"/>
+
+        <!-- Link 1 (elbow) attaches at the tip of link0 -->
+        <body name="link1" pos="0 0 -0.40">
+          <joint name="j1"/>
+          <!-- L1 = 0.35 m, r1 = 0.028 m -->
+          <geom name="g1" fromto="0 0 0   0 0 -0.35" size="0.028"/>
+          <site name="com1" pos="0 0 -0.175" size="0.01" rgba="0 1 0 1"/>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <!-- Underactuated: elbow-only motor -->
+  <actuator>
+    <motor name="m_elbow" joint="j1"/>
+  </actuator>
+</mujoco>

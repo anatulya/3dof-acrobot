@@ -1,13 +1,13 @@
 <mujoco model="acrobot3">
   <!-- angles in radians; gravity along -z so motion is in the x–z plane -->
   <compiler angle="radian"/>
-  <option gravity="0 0 -9.81" timestep="0.002" integrator="RK4"/>
+  <option gravity="0 0 -9.81" timestep="0.0001" integrator="RK4"/>
 
   <default>
     <!-- Don't limit revolute joints unless you really need to -->
-    <joint type="hinge" limited="false" damping="0.05" armature="0.002"/>
+    <joint type="hinge" limited="false" damping="0.01" armature="0.002"/>
     <geom type="capsule" size="0.03" rgba="0.7 0.7 0.75 1" density="800" />
-    <motor ctrllimited="true" ctrlrange="-3 3" gear="1"/>
+    <motor ctrllimited="true" ctrlrange="-12 12" gear="1"/>
   </default>
 
   <worldbody>

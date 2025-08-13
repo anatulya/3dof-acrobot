@@ -28,7 +28,7 @@ dt = 0.005
 t_eval = np.arange(0.0, t_end, dt)
 
 # initial configuration (state space)
-x0 = np.array([np.pi/4, 0.0, 0.0, 0.0])
+x0 = np.array([np.pi+0.1, 0.0, 0.0, 0.0])
 
 def mat_inertial(q):
     """
@@ -87,8 +87,8 @@ def f(t, x):
     C = mat_coriolis(q, qd)
     tau = vec_torque(q)
 
-    # exert 0 torque on both actuators
-    u = np.array([0.0, 0.0])
+    # controller
+    u = controller(x)
 
     # damping
     damping_coeff = 0.5
